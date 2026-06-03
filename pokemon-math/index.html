@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokemon Math Adventure</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Pokemon Math Adventure</h1>
+      <p class="subtitle">Use the Pokemon numbers to solve the equation!</p>
+    </header>
+
+    <div id="loading-panel" class="loading-panel hidden">
+      <p id="loading-text">Loading Pokemon...</p>
+      <div class="progress-bar"><div id="loading-fill" class="progress-fill"></div></div>
+    </div>
+
+    <main id="game-panel" class="hidden">
+      <div id="game-active">
+      <nav class="ops" aria-label="Math operation">
+        <button type="button" class="op-btn active" data-op="+" aria-pressed="true">+</button>
+        <button type="button" class="op-btn" data-op="-" aria-pressed="false">−</button>
+        <button type="button" class="op-btn" data-op="×" aria-pressed="false">×</button>
+        <button type="button" class="op-btn" data-op="÷" aria-pressed="false">÷</button>
+      </nav>
+
+      <section class="problem-area" id="problem-area">
+        <div class="pokemon-row">
+          <article class="pokemon-card" id="card-left">
+            <img id="img-left" alt="" width="140" height="140" />
+            <p class="pokemon-name" id="name-left"></p>
+            <p class="dex-number" id="num-left"></p>
+          </article>
+
+          <span class="op-symbol" id="op-display">+</span>
+
+          <article class="pokemon-card" id="card-right">
+            <img id="img-right" alt="" width="140" height="140" />
+            <p class="pokemon-name" id="name-right"></p>
+            <p class="dex-number" id="num-right"></p>
+          </article>
+        </div>
+
+        <p class="equation" id="equation"></p>
+      </section>
+
+      <section class="answer-area">
+        <form id="answer-form">
+          <label for="answer-input">Your answer</label>
+          <div class="answer-row">
+            <input
+              id="answer-input"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+              placeholder="?"
+            />
+            <button type="submit" id="check-btn" class="btn primary">Check</button>
+          </div>
+        </form>
+        <p id="feedback" class="feedback" role="status"></p>
+      </section>
+      </div>
+
+      <section id="success-panel" class="success-panel hidden" aria-live="assertive">
+        <p class="success-banner">Correct! Great job!</p>
+        <h2 class="success-heading">You found</h2>
+        <article class="pokemon-card success-card">
+          <img id="img-result" alt="" width="200" height="200" />
+          <p class="success-pokemon-name" id="name-result"></p>
+          <p class="dex-number success-dex" id="num-result"></p>
+        </article>
+        <p class="success-equation" id="success-equation"></p>
+        <button type="button" id="next-btn" class="btn secondary">
+          Next Problem
+        </button>
+      </section>
+
+    </main>
+
+    <div id="grass-meadow" class="grass-meadow" aria-hidden="true">
+      <div class="grass-hill"></div>
+      <div id="grass-pokemon" class="grass-pokemon"></div>
+      <div class="grass-blades"></div>
+    </div>
+  </div>
+
+  <script src="js/settings.js"></script>
+  <script src="js/pokemon-data.js"></script>
+  <script src="js/problems.js"></script>
+  <script src="js/grass-scene.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
