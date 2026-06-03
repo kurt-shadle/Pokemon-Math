@@ -1,8 +1,68 @@
+const IMAGE_CACHE_NAME = "pokemon-math-v1";
+
 const ARTWORK_URL = (id) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 
 const SPRITE_URL = (id) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+
+const blobUrlByImg = new WeakMap();
+
+function revokeBlobUrlForImg(img) {
+  const prev = blobUrlByImg.get(img);
+  if (prev) {
+    URL.revokeObjectURL(prev);
+    blobUrlByImg.delete(img);
+  }
+}
+
+function urlsForPokemon(pokemon) {
+  const urls = [pokemon.imageUrl, SPRITE_URL(pokemon.id)];
+  return [...new Set(urls.filter(Boolean))];
+}
+
+async function cacheUrl(cache, url) {
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (res.ok) await cache.put(url, res);
+  } catch {
+    try {
+      await cache.add(url);
+    } catch {
+      /* skip unreachable urls */
+    }
+  }
+}
+
+/** Store sprites in Cache API so they work offline after one online visit (HTTPS). */
+async function warmImageCache(map, onProgress) {
+  if (!("caches" in window)) return;
+
+  const cache = await caches.open(IMAGE_CACHE_NAME);
+  const urls = new Set();
+  for (const pokemon of map.values()) {
+    for (const url of urlsForPokemon(pokemon)) urls.add(url);
+  }
+
+  const list = [...urls];
+  let done = 0;
+  for (const url of list) {
+    await cacheUrl(cache, url);
+    done++;
+    onProgress?.(done, list.length);
+  }
+}
+
+async function applyCachedImage(img, url) {
+  if (!url || !("caches" in window)) return false;
+  const cached = await caches.match(url);
+  if (!cached) return false;
+  revokeBlobUrlForImg(img);
+  const blobUrl = URL.createObjectURL(await cached.blob());
+  blobUrlByImg.set(img, blobUrl);
+  img.src = blobUrl;
+  return true;
+}
 
 async function fetchOnePokemon(id) {
   try {
@@ -89,22 +149,39 @@ async function ensureDexLoaded(map, onProgress) {
   return map;
 }
 
-function setPokemonImage(img, pokemon) {
+async function applyPokemonImage(img, pokemon) {
   if (!pokemon) {
+    revokeBlobUrlForImg(img);
     img.removeAttribute("src");
     img.alt = "Unknown Pokemon";
     img.classList.add("placeholder");
     return;
   }
+
   img.classList.remove("placeholder");
   img.alt = pokemon.name;
+  const primary = pokemon.imageUrl;
   const fallback = SPRITE_URL(pokemon.id);
+
   img.onerror = function onImgError() {
-    if (img.src !== fallback) {
-      img.src = fallback;
-    } else {
+    if (img.dataset.fallbackTried === "1") {
       img.classList.add("placeholder");
+      return;
     }
+    img.dataset.fallbackTried = "1";
+    void (async () => {
+      if (await applyCachedImage(img, fallback)) return;
+      revokeBlobUrlForImg(img);
+      img.src = fallback;
+    })();
   };
-  img.src = pokemon.imageUrl;
+
+  img.dataset.fallbackTried = "0";
+  if (await applyCachedImage(img, primary)) return;
+  revokeBlobUrlForImg(img);
+  img.src = primary;
+}
+
+function setPokemonImage(img, pokemon) {
+  void applyPokemonImage(img, pokemon);
 }

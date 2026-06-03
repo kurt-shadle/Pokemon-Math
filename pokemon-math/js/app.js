@@ -219,6 +219,12 @@ async function init() {
       loadingText.textContent = `Loading Pokemon... ${done} / ${total}`;
       loadingFill.style.width = `${pct}%`;
     });
+
+    await warmImageCache(dex, (done, total) => {
+      const pct = Math.round((done / total) * 100);
+      loadingText.textContent = `Caching images... ${done} / ${total}`;
+      loadingFill.style.width = `${pct}%`;
+    });
   } catch (err) {
     loadingText.textContent =
       "Could not load Pokemon. Check your internet and refresh the page.";

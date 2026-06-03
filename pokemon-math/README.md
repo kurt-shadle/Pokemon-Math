@@ -9,9 +9,10 @@ A simple browser math game for personal use. Each problem shows two Pokemon (wit
 
 ## How to play
 
-1. Open `index.html` in Chrome, Edge, or Firefox (double-click the file).
-2. The first launch downloads Pokemon data (needs internet once). Later visits use the browser cache and work offline.
-3. Pick **+ − × ÷**, solve the equation, press **Check**. Wrong answers let you try again; when correct, celebrate the Pokemon you found, then press **Next Problem**.
+1. **Online:** [https://kurt-shadle.github.io/Pokemon-Math/](https://kurt-shadle.github.io/Pokemon-Math/) in Chrome (best on Android for phone use).
+2. **Local:** open `index.html` in a browser (needs internet for the first load; `fetch` may fail if opened as `file://`).
+3. First launch downloads Pokémon data and caches images (Wi‑Fi once). See [docs/OFFLINE.md](docs/OFFLINE.md) for car-trip / offline preload steps.
+4. Pick **+ − × ÷**, solve the equation, press **Check**. Wrong answers let you try again; when correct, celebrate the Pokémon you found, then press **Next Problem**.
 
 ## Tune difficulty
 
