@@ -67,17 +67,37 @@
       </div>
 
       <section id="success-panel" class="success-panel hidden" aria-live="assertive">
-        <p class="success-banner">Correct! Great job!</p>
-        <h2 class="success-heading">You found</h2>
-        <article class="pokemon-card success-card">
-          <img id="img-result" alt="" width="200" height="200" />
-          <p class="success-pokemon-name" id="name-result"></p>
-          <p class="dex-number success-dex" id="num-result"></p>
-        </article>
-        <p class="success-equation" id="success-equation"></p>
-        <button type="button" id="next-btn" class="btn secondary">
-          Next Problem
-        </button>
+        <div class="pokedex">
+          <header class="pokedex-header">
+            <div class="pokedex-lights" aria-hidden="true">
+              <span class="pokedex-light pokedex-light--main"></span>
+              <div class="pokedex-light-row">
+                <span class="pokedex-light pokedex-light--sm pokedex-light--red"></span>
+                <span class="pokedex-light pokedex-light--sm pokedex-light--yellow"></span>
+                <span class="pokedex-light pokedex-light--sm pokedex-light--green"></span>
+              </div>
+            </div>
+            <p class="pokedex-brand">Pokédex</p>
+          </header>
+
+          <div class="pokedex-screen">
+            <p class="success-banner">Entry registered!</p>
+            <h2 class="success-heading">Pokémon discovered</h2>
+            <article class="pokemon-card success-card">
+              <img id="img-result" alt="" width="200" height="200" />
+              <p class="success-pokemon-name" id="name-result"></p>
+              <p class="dex-number success-dex" id="num-result"></p>
+            </article>
+            <p class="success-equation" id="success-equation"></p>
+          </div>
+
+          <footer class="pokedex-footer">
+            <span class="pokedex-dpad" aria-hidden="true"></span>
+            <button type="button" id="next-btn" class="btn pokedex-btn">
+              Next Problem
+            </button>
+          </footer>
+        </div>
       </section>
 
     </main>
