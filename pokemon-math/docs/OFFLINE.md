@@ -19,7 +19,7 @@ Do all of this **on the Android phone** he will use in the car (not on your PC).
 3. Wait for **Caching images…** to finish if shown.
 4. Solve a few problems in **each** mode: **+**, **−**, **×**, **÷** (saves My Pokédex progress on this device).
 5. Open **My Pokédex** → switch each tab → **scroll the full grid slowly** so sprites load.
-6. Chrome menu → **Add to Home screen** (or **Install app**).
+6. Chrome menu → **Add to Home screen** (or **Install app**). The layout is tuned for phone screens (large tap targets, safe areas for notches).
 7. **Airplane mode verification (required):**
    - Turn Wi‑Fi off (or airplane mode on).
    - Open the game from the **home screen** shortcut (not a new tab).
