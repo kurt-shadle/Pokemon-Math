@@ -65,6 +65,30 @@ async function loadPokemonData(onProgress) {
   return map;
 }
 
+/** Fetch any dex ids missing from the map up to SETTINGS.maxDex. */
+async function ensureDexLoaded(map, onProgress) {
+  const target = SETTINGS.maxDex;
+
+  const missing = [];
+  for (let i = SETTINGS.minDex; i <= target; i++) {
+    if (!map.has(i)) missing.push(i);
+  }
+  if (!missing.length) return map;
+
+  let done = 0;
+  const total = missing.length;
+  for (let i = 0; i < missing.length; i += SETTINGS.fetchBatchSize) {
+    const batch = missing.slice(i, i + SETTINGS.fetchBatchSize);
+    const entries = await Promise.all(batch.map(fetchOnePokemon));
+    for (const entry of entries) map.set(Number(entry.id), entry);
+    done += batch.length;
+    onProgress?.(done, total);
+  }
+
+  savePokemonToCache(map);
+  return map;
+}
+
 function setPokemonImage(img, pokemon) {
   if (!pokemon) {
     img.removeAttribute("src");

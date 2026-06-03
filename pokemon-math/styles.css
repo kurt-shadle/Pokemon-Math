@@ -38,6 +38,47 @@ header {
   margin-bottom: 1rem;
 }
 
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1rem;
+}
+
+.header-row h1 {
+  margin: 0;
+}
+
+.collection-open-btn {
+  position: relative;
+  background: #e3350d;
+  color: #fef08a;
+  border: 3px solid #1a1a1a;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.85rem;
+  box-shadow: 0 3px 0 #1a1a1a;
+}
+
+.collection-open-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.collection-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1e293b;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.5rem, 5vw, 2rem);
@@ -388,6 +429,13 @@ h1 {
     inset 0 -6px 16px rgba(15, 45, 61, 0.12);
 }
 
+.success-catch-count {
+  margin: 0.35rem 0 0;
+  font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+  font-weight: 700;
+  color: #b45309;
+}
+
 .success-banner {
   margin: 0;
   font-size: clamp(0.95rem, 4vw, 1.15rem);
@@ -602,4 +650,143 @@ h1 {
     width: 80px;
     height: 80px;
   }
+}
+
+/* --- My Pokédex collection --- */
+body.collection-open {
+  overflow: hidden;
+}
+
+.collection-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.75rem;
+  padding-bottom: 5rem;
+  background: rgba(15, 23, 42, 0.82);
+  overflow-y: auto;
+}
+
+.collection-modal.hidden {
+  display: none !important;
+}
+
+.collection-dialog {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.collection-screen {
+  max-height: min(58vh, 420px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.collection-ops {
+  margin-bottom: 0.75rem;
+}
+
+.collection-stats,
+.collection-range {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--pokedex-screen-text, #0f2d3d);
+  text-align: center;
+}
+
+.collection-range {
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: 0.75rem;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.5rem;
+}
+
+.collection-entry {
+  position: relative;
+  text-align: center;
+  padding: 0.4rem 0.25rem 0.5rem;
+  border-radius: 8px;
+  border: 2px solid rgba(15, 45, 61, 0.15);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.collection-entry.empty {
+  opacity: 0.55;
+  background: rgba(15, 45, 61, 0.08);
+}
+
+.collection-entry.empty img {
+  opacity: 0.35;
+}
+
+.collection-entry-num {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.collection-entry img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+  margin: 0.15rem auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.collection-entry-name {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--pokedex-screen-text, #0f2d3d);
+  text-transform: capitalize;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-entry-count {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  background: #166534;
+  color: #ecfdf5;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.collection-footer {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.collection-footer .pokedex-dpad {
+  display: none;
+}
+
+.collection-close-btn {
+  flex: none;
+  width: 100%;
+}
+
+.collection-close-btn {
+  border-radius: var(--radius);
+  box-shadow: none;
 }

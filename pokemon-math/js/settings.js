@@ -7,5 +7,6 @@ const SETTINGS = {
   /** Pokemon peeking from the grass each problem (one is secretly the answer). */
   grassCount: 6,
   cacheKey: "pokemonDex386_v1",
+  collectionKey: "pokemonMathCollection_v1",
   fetchBatchSize: 10,
 };

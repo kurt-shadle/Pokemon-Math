@@ -29,6 +29,7 @@ const successEquation = document.getElementById("success-equation");
 const imgResult = document.getElementById("img-result");
 const nameResult = document.getElementById("name-result");
 const numResult = document.getElementById("num-result");
+const successCatchCount = document.getElementById("success-catch-count");
 const nextBtn = document.getElementById("next-btn");
 
 const opButtons = document.querySelectorAll(".op-btn");
@@ -77,9 +78,17 @@ function isEnterKey(e) {
 }
 
 function parseAnswerInput(raw) {
-  const trimmed = raw.trim();
-  if (trimmed === "" || !/^\d+$/.test(trimmed)) return null;
-  return parseInt(trimmed, 10);
+  const digits = raw.replace(/\D/g, "");
+  if (digits === "") return null;
+  return parseInt(digits, 10);
+}
+
+function sanitizeAnswerField() {
+  if (!answerInput) return;
+  const digits = answerInput.value.replace(/\D/g, "");
+  if (answerInput.value !== digits) {
+    answerInput.value = digits;
+  }
 }
 
 function showSuccessPanel(problem) {
@@ -103,6 +112,18 @@ function showSuccessPanel(problem) {
     nameResult.textContent = "Unknown Pokemon";
   }
   numResult.textContent = `#${answer}`;
+
+  const op = currentProblem.op ?? currentOp;
+  const timesFound = recordCatch(answer, op);
+  updateCollectionBadge(op);
+  const opLabel = getCollectionOpLabel(op);
+  if (successCatchCount) {
+    successCatchCount.classList.remove("hidden");
+    successCatchCount.textContent =
+      timesFound === 1
+        ? `First time in your ${opLabel} Pokédex!`
+        : `${opLabel} Pokédex: found ${timesFound} times!`;
+  }
 
   showSuccessView();
   nextBtn?.focus();
@@ -178,6 +199,7 @@ function setOperation(op) {
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-pressed", String(isActive));
   }
+  updateCollectionBadge(op);
   newProblem();
 }
 
@@ -207,6 +229,8 @@ async function init() {
   showLoading(false);
   checkBtn.disabled = false;
   answerInput.disabled = false;
+  answerInput.maxLength = String(SETTINGS.maxDex).length + 1;
+  initCollectionUI(dex, () => currentOp);
   showGameView();
   renderProblem(generateProblem(currentOp));
 }
@@ -218,6 +242,24 @@ for (const btn of opButtons) {
 function handleAnswerSubmit(e) {
   e.preventDefault();
   onCheck();
+}
+
+if (answerInput) {
+  answerInput.addEventListener("input", sanitizeAnswerField);
+  answerInput.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const pasted = (e.clipboardData?.getData("text") || "").replace(/\D/g, "");
+    if (!pasted) return;
+    const start = answerInput.selectionStart ?? answerInput.value.length;
+    const end = answerInput.selectionEnd ?? answerInput.value.length;
+    const combined = (
+      answerInput.value.slice(0, start) +
+      pasted +
+      answerInput.value.slice(end)
+    ).replace(/\D/g, "");
+    answerInput.value = combined.slice(0, answerInput.maxLength);
+    sanitizeAnswerField();
+  });
 }
 
 if (answerForm) {
