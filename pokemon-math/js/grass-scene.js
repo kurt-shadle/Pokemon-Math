@@ -1,7 +1,3 @@
-function grassRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -21,18 +17,14 @@ function pickGrassDexIds(problem, dexMap) {
   const exclude = new Set([problem.left, problem.right]);
   const ids = [];
 
-  if (
-    answer >= minDex &&
-    answer <= maxDex &&
-    dexMap.has(answer)
-  ) {
+  if (answer >= minDex && answer <= maxDex && dexMap.has(answer)) {
     ids.push(answer);
   }
 
   let guard = 0;
   while (ids.length < count && guard < 500) {
     guard++;
-    const id = grassRandomInt(minDex, maxDex);
+    const id = randomInt(minDex, maxDex);
     if (ids.includes(id) || exclude.has(id) || !dexMap.has(id)) continue;
     ids.push(id);
   }
@@ -43,21 +35,32 @@ function pickGrassDexIds(problem, dexMap) {
 const GRASS_SLOTS = [5, 20, 36, 52, 68, 84];
 const GRASS_DESKTOP_MQ = window.matchMedia("(min-width: 500px)");
 
+let lastGrassProblem = null;
+let lastGrassDexMap = null;
+
 function isGrassSceneEnabled() {
   return GRASS_DESKTOP_MQ.matches;
+}
+
+function clearGrassContainer(container) {
+  clearPokemonImages(container);
+  container.innerHTML = "";
 }
 
 function renderGrassScene(problem, dexMap) {
   const container = document.getElementById("grass-pokemon");
   if (!container || dexMap.size === 0) return;
 
+  lastGrassProblem = problem;
+  lastGrassDexMap = dexMap;
+
   if (!isGrassSceneEnabled()) {
-    container.innerHTML = "";
+    clearGrassContainer(container);
     return;
   }
 
   const ids = pickGrassDexIds(problem, dexMap);
-  container.innerHTML = "";
+  clearGrassContainer(container);
 
   ids.forEach((id, i) => {
     const pokemon = dexMap.get(id);
@@ -78,3 +81,9 @@ function renderGrassScene(problem, dexMap) {
     container.appendChild(mon);
   });
 }
+
+GRASS_DESKTOP_MQ.addEventListener("change", () => {
+  if (lastGrassProblem && lastGrassDexMap) {
+    renderGrassScene(lastGrassProblem, lastGrassDexMap);
+  }
+});

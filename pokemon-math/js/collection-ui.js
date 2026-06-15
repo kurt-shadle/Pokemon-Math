@@ -16,7 +16,15 @@ const collectionReplaceBtn = document.getElementById("collection-replace-btn");
 const collectionRestoreInput = document.getElementById("collection-restore-input");
 const collectionBackupStatus = document.getElementById("collection-backup-status");
 
+const backgroundInertTargets = [
+  document.getElementById("app-header"),
+  document.getElementById("loading-panel"),
+  document.getElementById("game-panel"),
+  document.getElementById("grass-meadow"),
+].filter(Boolean);
+
 let pendingRestoreMode = "merge";
+let focusBeforeCollection = null;
 
 function updateCollectionBadge(op) {
   if (!collectionBadge) return;
@@ -63,7 +71,7 @@ function buildCollectionEntry(id, count, pokemon) {
   const img = document.createElement("img");
   img.width = 72;
   img.height = 72;
-  img.alt = caught ? formatCollectionName(pokemon?.name) : "Not discovered";
+  img.alt = caught ? formatPokemonName(pokemon?.name) : "Not discovered";
   if (caught && pokemon) {
     setPokemonImage(img, pokemon);
   } else {
@@ -73,9 +81,7 @@ function buildCollectionEntry(id, count, pokemon) {
 
   const name = document.createElement("p");
   name.className = "collection-entry-name";
-  name.textContent = caught
-    ? formatCollectionName(pokemon?.name)
-    : "???";
+  name.textContent = caught ? formatPokemonName(pokemon?.name) : "???";
 
   el.append(num, img, name);
 
@@ -90,24 +96,20 @@ function buildCollectionEntry(id, count, pokemon) {
   return el;
 }
 
-function formatCollectionName(name) {
-  return name ? name.replace(/-/g, " ") : "???";
-}
-
 function renderCollectionGrid() {
   if (!collectionGrid || !collectionDexMap) return;
 
   const catches = getCatchesForOp(collectionViewOp);
   const { min, max } = getCollectionDexRange(collectionViewOp);
-  collectionGrid.innerHTML = "";
+  const fragment = document.createDocumentFragment();
 
   for (let id = min; id <= max; id++) {
     const count = catches[String(id)] || 0;
-    const pokemon =
-      collectionDexMap.get(id) ?? collectionDexMap.get(Number(id));
-    collectionGrid.appendChild(buildCollectionEntry(id, count, pokemon));
+    const pokemon = collectionDexMap.get(id);
+    fragment.appendChild(buildCollectionEntry(id, count, pokemon));
   }
 
+  collectionGrid.replaceChildren(fragment);
   updateCollectionChrome();
 }
 
@@ -117,14 +119,54 @@ function setCollectionViewOp(op) {
   renderCollectionGrid();
 }
 
+function getCollectionFocusable() {
+  if (!collectionModal) return [];
+  const dialog = collectionModal.querySelector(".collection-dialog");
+  if (!dialog) return [];
+  return [
+    ...dialog.querySelectorAll(
+      'button:not([disabled]), [href], input:not([type="file"]), select, textarea, [tabindex]:not([tabindex="-1"])'
+    ),
+  ].filter(
+    (el) => !el.classList.contains("hidden") && el.offsetParent !== null
+  );
+}
+
+function setBackgroundInert(inert) {
+  for (const el of backgroundInertTargets) {
+    if (inert) el.setAttribute("inert", "");
+    else el.removeAttribute("inert");
+  }
+}
+
+function handleCollectionTabTrap(e) {
+  if (e.key !== "Tab" || collectionModal?.classList.contains("hidden")) return;
+
+  const focusable = getCollectionFocusable();
+  if (focusable.length === 0) return;
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 function openCollection(op) {
   if (!collectionModal) return;
   collectionViewOp = normalizeCollectionOp(op ?? getGameOperation());
   syncCollectionOpButtons();
   renderCollectionGrid();
   setCollectionBackupStatus("");
+  focusBeforeCollection = document.activeElement;
   collectionModal.classList.remove("hidden");
   document.body.classList.add("collection-open");
+  setBackgroundInert(true);
   closeCollectionBtn?.focus();
 }
 
@@ -132,7 +174,13 @@ function closeCollection() {
   if (!collectionModal) return;
   collectionModal.classList.add("hidden");
   document.body.classList.remove("collection-open");
-  openCollectionBtn?.focus();
+  setBackgroundInert(false);
+  if (focusBeforeCollection && typeof focusBeforeCollection.focus === "function") {
+    focusBeforeCollection.focus();
+  } else {
+    openCollectionBtn?.focus();
+  }
+  focusBeforeCollection = null;
 }
 
 function setCollectionBackupStatus(message, isError = false) {
@@ -246,6 +294,8 @@ function initCollectionUI(dexMap, getCurrentOp) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !collectionModal?.classList.contains("hidden")) {
       closeCollection();
+      return;
     }
+    handleCollectionTabTrap(e);
   });
 }

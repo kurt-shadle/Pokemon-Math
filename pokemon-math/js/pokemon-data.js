@@ -7,6 +7,7 @@ const SPRITE_URL = (id) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 
 const blobUrlByImg = new WeakMap();
+const imageRequestTokenByImg = new WeakMap();
 
 function revokeBlobUrlForImg(img) {
   const prev = blobUrlByImg.get(img);
@@ -14,6 +15,17 @@ function revokeBlobUrlForImg(img) {
     URL.revokeObjectURL(prev);
     blobUrlByImg.delete(img);
   }
+}
+
+function clearPokemonImages(container) {
+  if (!container) return;
+  for (const img of container.querySelectorAll("img")) {
+    revokeBlobUrlForImg(img);
+  }
+}
+
+function isStaleImageRequest(img, token) {
+  return imageRequestTokenByImg.get(img) !== token;
 }
 
 function urlsForPokemon(pokemon) {
@@ -63,12 +75,16 @@ async function warmImageCache(map, onProgress) {
   }
 }
 
-async function applyCachedImage(img, url) {
+async function applyCachedImage(img, url, token) {
   if (!url || !("caches" in window)) return false;
   const cached = await caches.match(url);
-  if (!cached) return false;
+  if (!cached || isStaleImageRequest(img, token)) return false;
   revokeBlobUrlForImg(img);
   const blobUrl = URL.createObjectURL(await cached.blob());
+  if (isStaleImageRequest(img, token)) {
+    URL.revokeObjectURL(blobUrl);
+    return false;
+  }
   blobUrlByImg.set(img, blobUrl);
   img.src = blobUrl;
   return true;
@@ -136,6 +152,9 @@ async function loadPokemonData(onProgress) {
 }
 
 async function applyPokemonImage(img, pokemon) {
+  const token = (imageRequestTokenByImg.get(img) || 0) + 1;
+  imageRequestTokenByImg.set(img, token);
+
   if (!pokemon) {
     revokeBlobUrlForImg(img);
     img.removeAttribute("src");
@@ -145,25 +164,28 @@ async function applyPokemonImage(img, pokemon) {
   }
 
   img.classList.remove("placeholder");
-  img.alt = pokemon.name;
+  img.alt = formatPokemonName(pokemon.name);
   const primary = pokemon.imageUrl;
   const fallback = SPRITE_URL(pokemon.id);
 
   img.onerror = function onImgError() {
+    if (isStaleImageRequest(img, token)) return;
     if (img.dataset.fallbackTried === "1") {
       img.classList.add("placeholder");
       return;
     }
     img.dataset.fallbackTried = "1";
     void (async () => {
-      if (await applyCachedImage(img, fallback)) return;
+      if (await applyCachedImage(img, fallback, token)) return;
+      if (isStaleImageRequest(img, token)) return;
       revokeBlobUrlForImg(img);
       img.src = fallback;
     })();
   };
 
   img.dataset.fallbackTried = "0";
-  if (await applyCachedImage(img, primary)) return;
+  if (await applyCachedImage(img, primary, token)) return;
+  if (isStaleImageRequest(img, token)) return;
   revokeBlobUrlForImg(img);
   img.src = primary;
 }

@@ -1,7 +1,3 @@
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 function generateAddition() {
   let left, right, answer;
   do {
@@ -13,9 +9,13 @@ function generateAddition() {
 }
 
 function generateSubtraction() {
-  const left = randomInt(SETTINGS.minDex, SETTINGS.maxDex);
-  const right = randomInt(SETTINGS.minDex, left);
-  return { op: "-", left, right, answer: left - right };
+  let left, right, answer;
+  do {
+    left = randomInt(SETTINGS.minDex, SETTINGS.maxDex);
+    right = randomInt(SETTINGS.minDex, left);
+    answer = left - right;
+  } while (answer < SETTINGS.minDex);
+  return { op: "-", left, right, answer };
 }
 
 /** Both factors are 1–11 (11 times table). */
@@ -48,9 +48,4 @@ function generateProblem(op) {
     default:
       return generateAddition();
   }
-}
-
-function formatEquation(op, left, right) {
-  const symbol = op === "×" ? "×" : op === "÷" ? "÷" : op;
-  return `${left} ${symbol} ${right} = ?`;
 }

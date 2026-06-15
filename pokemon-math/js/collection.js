@@ -8,6 +8,8 @@ const COLLECTION_OP_LABELS = {
   "÷": "Division",
 };
 
+let collectionCache = null;
+
 function normalizeCollectionOp(op) {
   return COLLECTION_OPS.includes(op) ? op : "+";
 }
@@ -48,7 +50,7 @@ function migrateCollection(raw) {
   return { catches: migrated };
 }
 
-function loadCollection() {
+function readCollectionFromStorage() {
   try {
     const raw = localStorage.getItem(SETTINGS.collectionKey);
     if (!raw) return defaultCollectionData();
@@ -58,7 +60,15 @@ function loadCollection() {
   }
 }
 
+function loadCollection() {
+  if (!collectionCache) {
+    collectionCache = readCollectionFromStorage();
+  }
+  return collectionCache;
+}
+
 function saveCollection(data) {
+  collectionCache = data;
   localStorage.setItem(
     SETTINGS.collectionKey,
     JSON.stringify({ catches: data.catches })
@@ -98,11 +108,6 @@ function recordCatch(dexId, op) {
   bucket[key] = next;
   saveCollection(data);
   return next;
-}
-
-function getCatchCount(dexId, op) {
-  const key = String(Number(dexId));
-  return getCatchesForOp(op)[key] || 0;
 }
 
 function getCollectionStats(op) {

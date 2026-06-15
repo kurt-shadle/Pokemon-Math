@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="app">
-    <header>
+    <header id="app-header">
       <div class="header-row">
         <h1>Pokemon Math Adventure</h1>
         <button type="button" id="open-collection" class="btn collection-open-btn">
@@ -25,9 +25,24 @@
       <p class="subtitle">Use the Pokemon numbers to solve the equation!</p>
     </header>
 
-    <div id="loading-panel" class="loading-panel hidden">
+    <div
+      id="loading-panel"
+      class="loading-panel hidden"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <p id="loading-text">Loading Pokemon...</p>
-      <div class="progress-bar"><div id="loading-fill" class="progress-fill"></div></div>
+      <div
+        class="progress-bar"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-labelledby="loading-text"
+      >
+        <div id="loading-fill" class="progress-fill"></div>
+      </div>
     </div>
 
     <main id="game-panel" class="hidden">
@@ -41,7 +56,7 @@
 
       <section class="problem-area" id="problem-area">
         <div class="pokemon-row">
-          <article class="pokemon-card" id="card-left">
+          <article class="pokemon-card">
             <img id="img-left" alt="" width="140" height="140" />
             <p class="pokemon-name" id="name-left"></p>
             <p class="dex-number" id="num-left"></p>
@@ -49,7 +64,7 @@
 
           <span class="op-symbol" id="op-display">+</span>
 
-          <article class="pokemon-card" id="card-right">
+          <article class="pokemon-card">
             <img id="img-right" alt="" width="140" height="140" />
             <p class="pokemon-name" id="name-right"></p>
             <p class="dex-number" id="num-right"></p>
@@ -151,7 +166,7 @@
             <button type="button" class="op-btn collection-op-btn" data-op="÷" aria-pressed="false">÷</button>
           </nav>
           <p id="collection-stats" class="collection-stats">0 discovered · 0 total catches</p>
-          <p id="collection-range" class="collection-range">National Dex #1 – #151</p>
+          <p id="collection-range" class="collection-range">Loading Pokédex range…</p>
           <div id="collection-grid" class="collection-grid"></div>
         </div>
 
@@ -199,6 +214,7 @@
   </div>
 
   <script src="js/settings.js"></script>
+  <script src="js/utils.js"></script>
   <script src="js/pokemon-data.js"></script>
   <script src="js/problems.js"></script>
   <script src="js/grass-scene.js"></script>

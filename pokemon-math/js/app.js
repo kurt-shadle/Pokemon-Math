@@ -6,6 +6,7 @@ let solved = false;
 const loadingPanel = document.getElementById("loading-panel");
 const loadingText = document.getElementById("loading-text");
 const loadingFill = document.getElementById("loading-fill");
+const loadingProgressBar = document.querySelector("#loading-panel .progress-bar");
 const gamePanel = document.getElementById("game-panel");
 const gameActive = document.getElementById("game-active");
 const problemArea = document.getElementById("problem-area");
@@ -36,7 +37,7 @@ const numResult = document.getElementById("num-result");
 const successCatchCount = document.getElementById("success-catch-count");
 const nextBtn = document.getElementById("next-btn");
 
-const opButtons = document.querySelectorAll(".op-btn");
+const opButtons = document.querySelectorAll("#game-active .op-btn");
 
 function showGameView() {
   solved = false;
@@ -53,32 +54,27 @@ function showSuccessView() {
 function showLoading(show) {
   loadingPanel.classList.toggle("hidden", !show);
   gamePanel.classList.toggle("hidden", show);
+  loadingPanel.setAttribute("aria-busy", String(show));
 }
 
-function formatPokemonName(name) {
-  return name ? name.replace(/-/g, " ") : "???";
+function updateLoadingProgress(done, total, label) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  loadingText.textContent = `${label} ${done} / ${total}`;
+  loadingFill.style.width = `${pct}%`;
+  if (loadingProgressBar) {
+    loadingProgressBar.setAttribute("aria-valuenow", String(pct));
+  }
 }
 
 function fillCard(id, imgEl, nameEl, numEl) {
-  const pokemon = dex.get(id) ?? dex.get(Number(id));
+  const pokemon = dex.get(id);
   setPokemonImage(imgEl, pokemon);
   nameEl.textContent = formatPokemonName(pokemon?.name);
   numEl.textContent = `#${id}`;
 }
 
-function formatSolvedEquation(problem) {
-  const symbol =
-    problem.op === "×" ? "×" : problem.op === "÷" ? "÷" : problem.op;
-  return `${problem.left} ${symbol} ${problem.right} = ${problem.answer}`;
-}
-
 function isEnterKey(e) {
-  return (
-    e.key === "Enter" ||
-    e.code === "Enter" ||
-    e.code === "NumpadEnter" ||
-    e.keyCode === 13
-  );
+  return e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter";
 }
 
 function parseAnswerInput(raw) {
@@ -99,7 +95,7 @@ function showSuccessPanel(problem) {
   if (!successPanel) return;
 
   const answer = problem.answer;
-  const pokemon = dex.get(answer) ?? dex.get(Number(answer));
+  const pokemon = dex.get(answer);
 
   if (successEquation) {
     successEquation.textContent = formatSolvedEquation(problem);
@@ -122,11 +118,16 @@ function showSuccessPanel(problem) {
   updateCollectionBadge(op);
   const opLabel = getCollectionOpLabel(op);
   if (successCatchCount) {
-    successCatchCount.classList.remove("hidden");
-    successCatchCount.textContent =
-      timesFound === 1
-        ? `First time in your ${opLabel} Pokédex!`
-        : `${opLabel} Pokédex: found ${timesFound} times!`;
+    if (timesFound > 0) {
+      successCatchCount.classList.remove("hidden");
+      successCatchCount.textContent =
+        timesFound === 1
+          ? `First time in your ${opLabel} Pokédex!`
+          : `${opLabel} Pokédex: found ${timesFound} times!`;
+    } else {
+      successCatchCount.classList.add("hidden");
+      successCatchCount.textContent = "";
+    }
   }
 
   showSuccessView();
@@ -140,8 +141,7 @@ function renderProblem(problem) {
   fillCard(problem.left, imgLeft, nameLeft, numLeft);
   fillCard(problem.right, imgRight, nameRight, numRight);
 
-  const symbol =
-    problem.op === "×" ? "×" : problem.op === "÷" ? "÷" : problem.op;
+  const symbol = formatOpSymbol(problem.op);
   opDisplay.textContent = symbol;
   if (mathTop) mathTop.textContent = String(problem.left);
   if (mathOp) mathOp.textContent = symbol;
@@ -238,16 +238,12 @@ async function init() {
 
   try {
     dex = await loadPokemonData((done, total) => {
-      const pct = Math.round((done / total) * 100);
-      loadingText.textContent = `Loading Pokemon... ${done} / ${total}`;
-      loadingFill.style.width = `${pct}%`;
+      updateLoadingProgress(done, total, "Loading Pokemon...");
     });
 
     if (SETTINGS.warmImageCacheOnLoad) {
       await warmImageCache(dex, (done, total) => {
-        const pct = Math.round((done / total) * 100);
-        loadingText.textContent = `Caching images... ${done} / ${total}`;
-        loadingFill.style.width = `${pct}%`;
+        updateLoadingProgress(done, total, "Caching images...");
       });
     }
   } catch (err) {
@@ -293,11 +289,7 @@ if (answerInput) {
   });
 }
 
-if (answerForm) {
-  answerForm.addEventListener("submit", handleAnswerSubmit);
-} else {
-  checkBtn.addEventListener("click", onCheck);
-}
+answerForm.addEventListener("submit", handleAnswerSubmit);
 
 document.addEventListener("keydown", (e) => {
   if (!isEnterKey(e) || !solved) return;
