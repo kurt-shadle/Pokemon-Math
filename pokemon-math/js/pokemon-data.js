@@ -21,6 +21,15 @@ function urlsForPokemon(pokemon) {
   return [...new Set(urls.filter(Boolean))];
 }
 
+function entryFromDexRow(row) {
+  const id = Number(row.id);
+  return {
+    id,
+    name: row.name,
+    imageUrl: ARTWORK_URL(id),
+  };
+}
+
 async function cacheUrl(cache, url) {
   try {
     const res = await fetch(url, { mode: "cors" });
@@ -47,7 +56,8 @@ async function warmImageCache(map, onProgress) {
   const list = [...urls];
   let done = 0;
   for (const url of list) {
-    await cacheUrl(cache, url);
+    const existing = await cache.match(url);
+    if (!existing) await cacheUrl(cache, url);
     done++;
     onProgress?.(done, list.length);
   }
@@ -62,23 +72,6 @@ async function applyCachedImage(img, url) {
   blobUrlByImg.set(img, blobUrl);
   img.src = blobUrl;
   return true;
-}
-
-async function fetchOnePokemon(id) {
-  try {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-    if (!res.ok) {
-      return { id, name: `pokemon-${id}`, imageUrl: ARTWORK_URL(id) };
-    }
-    const data = await res.json();
-    const imageUrl =
-      data.sprites?.other?.["official-artwork"]?.front_default ||
-      data.sprites?.front_default ||
-      ARTWORK_URL(id);
-    return { id: data.id, name: data.name, imageUrl };
-  } catch {
-    return { id, name: `pokemon-${id}`, imageUrl: ARTWORK_URL(id) };
-  }
 }
 
 function loadPokemonFromCache() {
@@ -101,6 +94,26 @@ function savePokemonToCache(map) {
   localStorage.setItem(SETTINGS.cacheKey, JSON.stringify(arr));
 }
 
+async function fetchDexJson() {
+  const path = SETTINGS.dexJsonPath || "data/dex.json";
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Could not load ${path}: ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("dex.json must be an array");
+  return data;
+}
+
+function buildDexMap(rows) {
+  const map = new Map();
+  const { minDex, maxDex } = SETTINGS;
+  for (const row of rows) {
+    const id = Number(row.id);
+    if (id < minDex || id > maxDex) continue;
+    map.set(id, entryFromDexRow(row));
+  }
+  return map;
+}
+
 async function loadPokemonData(onProgress) {
   const cached = loadPokemonFromCache();
   if (cached) {
@@ -108,43 +121,16 @@ async function loadPokemonData(onProgress) {
     return cached;
   }
 
-  const map = new Map();
-  const ids = [];
-  for (let i = SETTINGS.minDex; i <= SETTINGS.maxDex; i++) ids.push(i);
-
-  let done = 0;
-  for (let i = 0; i < ids.length; i += SETTINGS.fetchBatchSize) {
-    const batch = ids.slice(i, i + SETTINGS.fetchBatchSize);
-    const entries = await Promise.all(batch.map(fetchOnePokemon));
-    for (const entry of entries) map.set(Number(entry.id), entry);
-    done += batch.length;
-    onProgress?.(done, ids.length);
+  const rows = await fetchDexJson();
+  const map = buildDexMap(rows);
+  const expected = SETTINGS.maxDex - SETTINGS.minDex + 1;
+  if (map.size < expected) {
+    throw new Error(
+      `dex.json has ${map.size} entries for #${SETTINGS.minDex}–#${SETTINGS.maxDex}; run scripts/generate-dex.mjs`
+    );
   }
 
-  savePokemonToCache(map);
-  return map;
-}
-
-/** Fetch any dex ids missing from the map up to SETTINGS.maxDex. */
-async function ensureDexLoaded(map, onProgress) {
-  const target = SETTINGS.maxDex;
-
-  const missing = [];
-  for (let i = SETTINGS.minDex; i <= target; i++) {
-    if (!map.has(i)) missing.push(i);
-  }
-  if (!missing.length) return map;
-
-  let done = 0;
-  const total = missing.length;
-  for (let i = 0; i < missing.length; i += SETTINGS.fetchBatchSize) {
-    const batch = missing.slice(i, i + SETTINGS.fetchBatchSize);
-    const entries = await Promise.all(batch.map(fetchOnePokemon));
-    for (const entry of entries) map.set(Number(entry.id), entry);
-    done += batch.length;
-    onProgress?.(done, total);
-  }
-
+  onProgress?.(map.size, map.size);
   savePokemonToCache(map);
   return map;
 }

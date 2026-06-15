@@ -41,7 +41,7 @@ body {
   max-width: 720px;
   margin: 0 auto;
   padding: calc(0.75rem + var(--safe-top)) calc(0.75rem + var(--safe-right))
-    calc(6rem + var(--safe-bottom)) calc(0.75rem + var(--safe-left));
+    calc(0.75rem + var(--safe-bottom)) calc(0.75rem + var(--safe-left));
 }
 
 header {
@@ -234,12 +234,57 @@ h1 {
   padding-top: 1.5rem;
 }
 
-.equation {
-  text-align: center;
-  font-size: clamp(1.5rem, 6vw, 2.25rem);
-  font-weight: 700;
+.math-problem {
+  display: flex;
+  justify-content: center;
   margin: 1rem 0 0;
-  letter-spacing: 0.02em;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.math-stack {
+  display: inline-grid;
+  grid-template-columns: minmax(1.25ch, auto) minmax(2.5ch, 1fr);
+  column-gap: 0.35rem;
+  row-gap: 0.1rem;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.75rem, 7vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.math-top {
+  grid-column: 2;
+  text-align: right;
+}
+
+.math-op {
+  grid-column: 1;
+  text-align: right;
+  color: var(--muted);
+}
+
+.math-bottom {
+  grid-column: 2;
+  text-align: right;
+}
+
+.math-rule {
+  grid-column: 1 / -1;
+  height: 3px;
+  margin: 0.2rem 0 0.15rem;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.math-result {
+  grid-column: 2;
+  text-align: right;
+  color: var(--accent);
+  letter-spacing: 0.04em;
 }
 
 .answer-area {
@@ -606,6 +651,7 @@ h1 {
   bottom: 0;
   left: 0;
   right: 0;
+  display: none;
   height: 110px;
   pointer-events: none;
   z-index: 0;
@@ -717,24 +763,6 @@ h1 {
   .pokedex-brand {
     font-size: 1.25rem;
   }
-
-  .grass-meadow {
-    height: 4.5rem;
-  }
-
-  .grass-hill {
-    height: 3rem;
-  }
-
-  .grass-mon {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .grass-pokemon {
-    height: 3.5rem;
-    bottom: 0.75rem;
-  }
 }
 
 @media (max-width: 500px) {
@@ -791,6 +819,7 @@ h1 {
   }
 
   .grass-meadow {
+    display: block;
     height: 7.5rem;
   }
 
@@ -927,6 +956,71 @@ body.collection-open {
 .collection-footer {
   flex-direction: column;
   align-items: stretch;
+}
+
+.collection-backup-panel {
+  margin-bottom: 0.65rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 2px solid #1a1a1a;
+  background: #0f2d3d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.collection-backup-hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.collection-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.collection-backup-btn,
+.collection-replace-btn {
+  flex: 1 1 calc(50% - 0.25rem);
+  min-height: var(--tap-min);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius);
+  border: 2px solid #1a1a1a;
+  background: #f8fafc;
+  color: #0f2d3d;
+  touch-action: manipulation;
+}
+
+.collection-replace-btn {
+  flex: 1 1 100%;
+  font-size: 0.85rem;
+  background: #e2e8f0;
+}
+
+.collection-backup-btn:focus-visible,
+.collection-replace-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.collection-backup-status {
+  min-height: 1.25rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  color: #bbf7d0;
+}
+
+.collection-backup-status.error {
+  color: #fecaca;
 }
 
 .collection-footer .pokedex-dpad {

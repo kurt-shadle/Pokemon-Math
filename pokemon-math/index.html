@@ -56,7 +56,15 @@
           </article>
         </div>
 
-        <p class="equation" id="equation"></p>
+        <div class="math-problem" id="math-problem" aria-label="">
+          <div class="math-stack">
+            <span class="math-top" id="math-top"></span>
+            <span class="math-op" id="math-op" aria-hidden="true"></span>
+            <span class="math-bottom" id="math-bottom"></span>
+            <span class="math-rule" aria-hidden="true"></span>
+            <span class="math-result" id="math-result">?</span>
+          </div>
+        </div>
       </section>
 
       <section class="answer-area">
@@ -148,6 +156,34 @@
         </div>
 
         <footer class="pokedex-footer collection-footer">
+          <div class="collection-backup-panel">
+            <p class="collection-backup-hint">
+              Backup saves a file you can store in Drive or Notes. Restore if browser data is cleared.
+            </p>
+            <div class="collection-backup-actions">
+              <button type="button" id="collection-backup-btn" class="btn collection-backup-btn">
+                Backup Pokédex
+              </button>
+              <button type="button" id="collection-restore-btn" class="btn collection-backup-btn">
+                Restore (merge)
+              </button>
+              <button type="button" id="collection-replace-btn" class="btn collection-replace-btn">
+                Replace all
+              </button>
+            </div>
+            <p
+              id="collection-backup-status"
+              class="collection-backup-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <input
+              type="file"
+              id="collection-restore-input"
+              accept=".json,application/json"
+              class="hidden"
+            />
+          </div>
           <button type="button" id="close-collection" class="btn primary collection-close-btn">
             Back to game
           </button>

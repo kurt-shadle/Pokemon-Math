@@ -1,4 +1,5 @@
 const COLLECTION_OPS = ["+", "-", "×", "÷"];
+const COLLECTION_EXPORT_VERSION = 1;
 
 const COLLECTION_OP_LABELS = {
   "+": "Addition",
@@ -114,4 +115,100 @@ function getCollectionStats(op) {
     totalCatches,
     opLabel: getCollectionOpLabel(op),
   };
+}
+
+function getCollectionBackupFilename() {
+  const date = new Date().toISOString().slice(0, 10);
+  return `pokemon-math-pokedex-${date}.json`;
+}
+
+function exportCollection() {
+  const data = loadCollection();
+  return {
+    version: COLLECTION_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    catches: data.catches,
+  };
+}
+
+function parseCollectionImport(raw) {
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("Backup file is not valid JSON.");
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Backup file is not a valid Pokédex backup.");
+  }
+  return migrateCollection(parsed);
+}
+
+function mergeCatchesByOp(target, source) {
+  let discoveredAdded = 0;
+  let totalCatchesAdded = 0;
+
+  for (const op of COLLECTION_OPS) {
+    const src = source[op] || {};
+    const bucket = target[op];
+    for (const [id, count] of Object.entries(src)) {
+      const n = Number(count);
+      if (!Number.isFinite(n) || n <= 0) continue;
+      const prev = bucket[id] || 0;
+      if (prev === 0) discoveredAdded++;
+      totalCatchesAdded += n;
+      bucket[id] = prev + n;
+    }
+  }
+
+  return { discoveredAdded, totalCatchesAdded };
+}
+
+function getAllCollectionStats(data) {
+  let discovered = 0;
+  let totalCatches = 0;
+  for (const op of COLLECTION_OPS) {
+    const stats = getCollectionStatsForData(data, op);
+    discovered += stats.discovered;
+    totalCatches += stats.totalCatches;
+  }
+  return { discovered, totalCatches };
+}
+
+function getCollectionStatsForData(data, op) {
+  const catches = data.catches[normalizeCollectionOp(op)] || {};
+  const ids = Object.keys(catches);
+  let totalCatches = 0;
+  for (const id of ids) totalCatches += catches[id];
+  return { discovered: ids.length, totalCatches };
+}
+
+/**
+ * @param {object|string} raw - Parsed backup or JSON string
+ * @param {{ mode?: 'merge' | 'replace' }} options
+ */
+function importCollection(raw, options = {}) {
+  const mode = options.mode === "replace" ? "replace" : "merge";
+  const imported = parseCollectionImport(raw);
+
+  if (mode === "replace") {
+    saveCollection(imported);
+    const stats = getAllCollectionStats(imported);
+    return {
+      mode,
+      ...stats,
+      discoveredAdded: stats.discovered,
+      totalCatchesAdded: stats.totalCatches,
+    };
+  }
+
+  const current = loadCollection();
+  const { discoveredAdded, totalCatchesAdded } = mergeCatchesByOp(
+    current.catches,
+    imported.catches
+  );
+  saveCollection(current);
+  return { mode, discoveredAdded, totalCatchesAdded };
 }

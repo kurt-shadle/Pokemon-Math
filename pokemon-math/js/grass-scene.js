@@ -41,10 +41,20 @@ function pickGrassDexIds(problem, dexMap) {
 }
 
 const GRASS_SLOTS = [5, 20, 36, 52, 68, 84];
+const GRASS_DESKTOP_MQ = window.matchMedia("(min-width: 500px)");
+
+function isGrassSceneEnabled() {
+  return GRASS_DESKTOP_MQ.matches;
+}
 
 function renderGrassScene(problem, dexMap) {
   const container = document.getElementById("grass-pokemon");
   if (!container || dexMap.size === 0) return;
+
+  if (!isGrassSceneEnabled()) {
+    container.innerHTML = "";
+    return;
+  }
 
   const ids = pickGrassDexIds(problem, dexMap);
   container.innerHTML = "";

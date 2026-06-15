@@ -6,7 +6,9 @@ const SETTINGS = {
   timesTableMax: 11,
   /** Pokemon peeking from the grass each problem (one is secretly the answer). */
   grassCount: 6,
+  /** Set true before a car trip to preload all sprites into Cache API (slower startup). */
+  warmImageCacheOnLoad: false,
+  dexJsonPath: "data/dex.json",
   cacheKey: "pokemonDex386_v1",
   collectionKey: "pokemonMathCollection_v1",
-  fetchBatchSize: 10,
 };

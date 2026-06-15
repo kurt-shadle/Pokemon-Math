@@ -10,6 +10,13 @@ const collectionOpButtons = document.querySelectorAll(".collection-op-btn");
 const openCollectionBtn = document.getElementById("open-collection");
 const closeCollectionBtn = document.getElementById("close-collection");
 const collectionBadge = document.getElementById("collection-badge");
+const collectionBackupBtn = document.getElementById("collection-backup-btn");
+const collectionRestoreBtn = document.getElementById("collection-restore-btn");
+const collectionReplaceBtn = document.getElementById("collection-replace-btn");
+const collectionRestoreInput = document.getElementById("collection-restore-input");
+const collectionBackupStatus = document.getElementById("collection-backup-status");
+
+let pendingRestoreMode = "merge";
 
 function updateCollectionBadge(op) {
   if (!collectionBadge) return;
@@ -115,6 +122,7 @@ function openCollection(op) {
   collectionViewOp = normalizeCollectionOp(op ?? getGameOperation());
   syncCollectionOpButtons();
   renderCollectionGrid();
+  setCollectionBackupStatus("");
   collectionModal.classList.remove("hidden");
   document.body.classList.add("collection-open");
   closeCollectionBtn?.focus();
@@ -127,6 +135,83 @@ function closeCollection() {
   openCollectionBtn?.focus();
 }
 
+function setCollectionBackupStatus(message, isError = false) {
+  if (!collectionBackupStatus) return;
+  collectionBackupStatus.textContent = message;
+  collectionBackupStatus.classList.toggle("error", isError);
+}
+
+function downloadCollectionBackup() {
+  try {
+    const payload = exportCollection();
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = getCollectionBackupFilename();
+    link.click();
+    URL.revokeObjectURL(url);
+    setCollectionBackupStatus("Backup downloaded — save it somewhere safe!");
+  } catch (err) {
+    setCollectionBackupStatus("Could not create backup.", true);
+    console.error(err);
+  }
+}
+
+function startCollectionRestore(mode) {
+  pendingRestoreMode = mode;
+  if (collectionRestoreInput) {
+    collectionRestoreInput.value = "";
+    collectionRestoreInput.click();
+  }
+}
+
+async function handleCollectionRestoreFile(file) {
+  if (!file) return;
+
+  setCollectionBackupStatus("");
+
+  if (
+    pendingRestoreMode === "replace" &&
+    !window.confirm(
+      "Replace all Pokédex progress on this device with the backup? This cannot be undone."
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const result = importCollection(text, { mode: pendingRestoreMode });
+
+    renderCollectionGrid();
+    updateCollectionBadge(getGameOperation());
+
+    if (result.mode === "replace") {
+      setCollectionBackupStatus(
+        `Restored backup — ${result.discoveredAdded} Pokémon, ${result.totalCatchesAdded} total catches.`
+      );
+      return;
+    }
+
+    if (result.discoveredAdded === 0 && result.totalCatchesAdded === 0) {
+      setCollectionBackupStatus("Backup loaded — nothing new to merge.");
+      return;
+    }
+
+    setCollectionBackupStatus(
+      `Merged backup — +${result.discoveredAdded} discovered, +${result.totalCatchesAdded} catches.`
+    );
+  } catch (err) {
+    setCollectionBackupStatus(
+      err instanceof Error ? err.message : "Could not read backup file.",
+      true
+    );
+    console.error(err);
+  }
+}
+
 function initCollectionUI(dexMap, getCurrentOp) {
   collectionDexMap = dexMap;
   if (typeof getCurrentOp === "function") getGameOperation = getCurrentOp;
@@ -137,6 +222,18 @@ function initCollectionUI(dexMap, getCurrentOp) {
     openCollection(getGameOperation())
   );
   closeCollectionBtn?.addEventListener("click", closeCollection);
+
+  collectionBackupBtn?.addEventListener("click", downloadCollectionBackup);
+  collectionRestoreBtn?.addEventListener("click", () =>
+    startCollectionRestore("merge")
+  );
+  collectionReplaceBtn?.addEventListener("click", () =>
+    startCollectionRestore("replace")
+  );
+  collectionRestoreInput?.addEventListener("change", () => {
+    const file = collectionRestoreInput.files?.[0];
+    void handleCollectionRestoreFile(file);
+  });
 
   for (const btn of collectionOpButtons) {
     btn.addEventListener("click", () => setCollectionViewOp(btn.dataset.op));

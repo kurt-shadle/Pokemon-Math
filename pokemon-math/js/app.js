@@ -17,7 +17,11 @@ const nameRight = document.getElementById("name-right");
 const numLeft = document.getElementById("num-left");
 const numRight = document.getElementById("num-right");
 const opDisplay = document.getElementById("op-display");
-const equationEl = document.getElementById("equation");
+const mathProblem = document.getElementById("math-problem");
+const mathTop = document.getElementById("math-top");
+const mathOp = document.getElementById("math-op");
+const mathBottom = document.getElementById("math-bottom");
+const mathResult = document.getElementById("math-result");
 
 const answerForm = document.getElementById("answer-form");
 const answerInput = document.getElementById("answer-input");
@@ -139,11 +143,16 @@ function renderProblem(problem) {
   const symbol =
     problem.op === "×" ? "×" : problem.op === "÷" ? "÷" : problem.op;
   opDisplay.textContent = symbol;
-  equationEl.textContent = formatEquation(
-    problem.op,
-    problem.left,
-    problem.right
-  );
+  if (mathTop) mathTop.textContent = String(problem.left);
+  if (mathOp) mathOp.textContent = symbol;
+  if (mathBottom) mathBottom.textContent = String(problem.right);
+  if (mathResult) mathResult.textContent = "?";
+  if (mathProblem) {
+    mathProblem.setAttribute(
+      "aria-label",
+      formatEquation(problem.op, problem.left, problem.right)
+    );
+  }
 
   answerInput.value = "";
   answerInput.disabled = false;
@@ -203,11 +212,25 @@ function setOperation(op) {
   newProblem();
 }
 
+async function requestPersistentStorage() {
+  if (!navigator.storage?.persist) return;
+  try {
+    if (navigator.storage.persisted && (await navigator.storage.persisted())) {
+      return;
+    }
+    await navigator.storage.persist();
+  } catch {
+    /* browser may deny; backup file is the real safety net */
+  }
+}
+
 async function init() {
   if (!gameActive || !successPanel) {
     console.error("Game markup is missing required elements.");
     return;
   }
+
+  void requestPersistentStorage();
 
   showLoading(true);
   checkBtn.disabled = true;
@@ -220,11 +243,13 @@ async function init() {
       loadingFill.style.width = `${pct}%`;
     });
 
-    await warmImageCache(dex, (done, total) => {
-      const pct = Math.round((done / total) * 100);
-      loadingText.textContent = `Caching images... ${done} / ${total}`;
-      loadingFill.style.width = `${pct}%`;
-    });
+    if (SETTINGS.warmImageCacheOnLoad) {
+      await warmImageCache(dex, (done, total) => {
+        const pct = Math.round((done / total) * 100);
+        loadingText.textContent = `Caching images... ${done} / ${total}`;
+        loadingFill.style.width = `${pct}%`;
+      });
+    }
   } catch (err) {
     loadingText.textContent =
       "Could not load Pokemon. Check your internet and refresh the page.";
