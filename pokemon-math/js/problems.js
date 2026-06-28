@@ -1,3 +1,8 @@
+/** Stack notation: larger operand on top (left). */
+function withLargerOnTop(left, right) {
+  return left < right ? [right, left] : [left, right];
+}
+
 function generateAddition() {
   let left, right, answer;
   do {
@@ -5,6 +10,7 @@ function generateAddition() {
     right = randomInt(SETTINGS.minDex, SETTINGS.maxDex - left);
     answer = left + right;
   } while (answer > SETTINGS.maxDex);
+  [left, right] = withLargerOnTop(left, right);
   return { op: "+", left, right, answer };
 }
 
@@ -21,8 +27,9 @@ function generateSubtraction() {
 /** Both factors are 1–11 (11 times table). */
 function generateMultiplication() {
   const max = SETTINGS.timesTableMax;
-  const left = randomInt(1, max);
-  const right = randomInt(1, max);
+  let left = randomInt(1, max);
+  let right = randomInt(1, max);
+  [left, right] = withLargerOnTop(left, right);
   return { op: "×", left, right, answer: left * right };
 }
 
